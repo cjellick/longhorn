@@ -6,8 +6,10 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/rancher/longhorn/agent/controller"
+	"github.com/rancher/longhorn/agent/controller/rest"
 	"github.com/rancher/longhorn/agent/status"
 )
 
@@ -55,6 +57,7 @@ func runApp(context *cli.Context) error {
 
 	if runController {
 		go runPing(context)
+		go runAPI(context)
 		c := controller.New()
 		defer c.Close()
 		return c.Start()
@@ -63,6 +66,18 @@ func runApp(context *cli.Context) error {
 	}
 
 	return nil
+}
+
+func runAPI(context *cli.Context) {
+	server := rest.NewServer()
+	router := http.Handler(rest.NewRouter(server))
+
+	router = handlers.LoggingHandler(os.Stdout, router)
+	router = handlers.ProxyHeaders(router)
+	listen := "0.0.0.0:80"
+	logrus.Infof("Listening on %s", listen)
+	err := http.ListenAndServe(listen, router)
+	logrus.Fatalf("API returned with error: %v", err)
 }
 
 func runPing(context *cli.Context) error {
