@@ -37,14 +37,17 @@ func (c *ControllerClient) Start(replicas ...string) error {
 	}, nil)
 }
 
-func (c *ControllerClient) Snapshot() (string, error) {
+func (c *ControllerClient) Snapshot(name string) (string, error) {
 	volume, err := c.GetVolume()
 	if err != nil {
 		return "", err
 	}
 
+	input := &rest.SnapshotInput{
+		Name: name,
+	}
 	output := &rest.SnapshotOutput{}
-	err = c.post(volume.Actions["snapshot"], nil, output)
+	err = c.post(volume.Actions["snapshot"], input, output)
 	if err != nil {
 		return "", err
 	}
