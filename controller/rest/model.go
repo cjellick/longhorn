@@ -112,14 +112,14 @@ func NewSchema() *client.Schemas {
 
 	volumes := schemas.AddType("volume", Volume{})
 	volumes.ResourceActions = map[string]client.Action{
-		"start": client.Action{
+		"start": {
 			Input:  "startInput",
 			Output: "volume",
 		},
-		"shutdown": client.Action{
+		"shutdown": {
 			Output: "volume",
 		},
-		"snapshot": client.Action{
+		"snapshot": {
 			Input:  "snapshotInput",
 			Output: "snapshotOutput",
 		},
