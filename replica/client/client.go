@@ -288,11 +288,12 @@ func (c *ReplicaClient) RmBackup(backup string) error {
 	}
 }
 
-func (c *ReplicaClient) RestoreBackup(backup string) error {
+func (c *ReplicaClient) RestoreBackup(backup, snapshotFile string) error {
 	var running agent.Process
 	err := c.post(c.syncAgent+"/processes", &agent.Process{
 		ProcessType: "restore",
 		SrcFile:     backup,
+		DestFile:    snapshotFile,
 	}, &running)
 	if err != nil {
 		return err

@@ -5,7 +5,9 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/rancher/longhorn/controller/rest"
+	"github.com/rancher/longhorn/replica"
 	replicaClient "github.com/rancher/longhorn/replica/client"
+	"github.com/rancher/longhorn/util"
 )
 
 func (t *Task) CreateBackup(snapshot, dest string) (string, error) {
@@ -130,16 +132,23 @@ func (t *Task) RestoreBackup(backup string) error {
 		}
 	}
 
+	// generate new snapshot and metafile as base for new volume
+	snapshotID := util.UUID()
+	snapshotFile := replica.GenerateSnapshotDiskName(snapshotID)
 	for _, replica := range replicas {
-		if err := t.restoreBackup(&replica, backup); err != nil {
+		if err := t.restoreBackup(&replica, backup, snapshotFile); err != nil {
 			return err
 		}
 	}
 
+	// call to controller to revert to sfile
+	if err := t.client.RevertSnapshot(snapshotID); err != nil {
+		return fmt.Errorf("Fail to revert to snapshot %v", snapshotID)
+	}
 	return nil
 }
 
-func (t *Task) restoreBackup(replicaInController *rest.Replica, backup string) error {
+func (t *Task) restoreBackup(replicaInController *rest.Replica, backup string, snapshotFile string) error {
 	if replicaInController.Mode != "RW" {
 		return fmt.Errorf("Can only create backup from replica in mode RW, got %s", replicaInController.Mode)
 	}
@@ -151,7 +160,7 @@ func (t *Task) restoreBackup(replicaInController *rest.Replica, backup string) e
 
 	logrus.Infof("Restoring backup %s on %s", backup, replicaInController.Address)
 
-	if err := repClient.RestoreBackup(backup); err != nil {
+	if err := repClient.RestoreBackup(backup, snapshotFile); err != nil {
 		logrus.Errorf("Failed restoring backup %s on %s", backup, replicaInController.Address)
 		return err
 	}

@@ -259,7 +259,30 @@ func doBackupRestore(c *cli.Context) error {
 	if err := objectstore.RestoreDeltaBlockBackup(backupURL, toFile); err != nil {
 		return err
 	}
+
+	if err := createNewSnapshotMetafile(toFile + ".meta"); err != nil {
+		return err
+	}
 	return nil
+}
+
+func createNewSnapshotMetafile(file string) error {
+	f, err := os.Create(file + ".tmp")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	content := "{\"Parent\":\"\"}\n"
+	if _, err := f.Write([]byte(content)); err != nil {
+		return err
+	}
+
+	if err := f.Close(); err != nil {
+		return err
+	}
+
+	return os.Rename(file+".tmp", file)
 }
 
 func cmdBackupList(c *cli.Context) {
