@@ -42,7 +42,6 @@ func NewRouter(s *Server) *mux.Router {
 	router.Methods("POST").Path("/v1/snapshots").Handler(f(schemas, s.CreateSnapshot))
 	router.Methods("DELETE").Path("/v1/snapshots/{id}").Handler(f(schemas, s.DeleteSnapshot))
 	router.Methods("POST").Path("/v1/snapshots/{id}").Queries("action", "backup").Handler(f(schemas, s.CreateBackup))
-	router.Methods("POST").Path("/v1/snapshots/{id}").Queries("action", "removebackup").Handler(f(schemas, s.RemoveBackup))
 
 	// Restore status
 	router.Methods("GET").Path("/v1/backupstatuses/{id}").Handler(f(schemas, s.GetBackupStatus))

@@ -17,7 +17,6 @@ import (
 	"github.com/rancher/go-rancher/api"
 	"github.com/rancher/longhorn/agent/controller"
 	"github.com/rancher/longhorn/agent/replica/rest"
-	"regexp"
 )
 
 // TODO Add logic to purge old entries from these maps
@@ -26,8 +25,6 @@ var restoreMap = make(map[string]*status)
 
 var backupMutex = &sync.RWMutex{}
 var backupMap = make(map[string]*status)
-
-var doesntExistRegex = regexp.MustCompile("cannot find.*in objectstore")
 
 func (s *Server) CreateBackup(rw http.ResponseWriter, req *http.Request) error {
 	logrus.Infof("Creating backup")
@@ -71,47 +68,6 @@ func (s *Server) CreateBackup(rw http.ResponseWriter, req *http.Request) error {
 	}
 
 	return apiContext.WriteResource(status)
-}
-
-func (s *Server) RemoveBackup(rw http.ResponseWriter, req *http.Request) error {
-	apiContext := api.GetApiContext(req)
-
-	var input locationInput
-	if err := apiContext.Read(&input); err != nil {
-		return err
-	}
-	logrus.Infof("Removing backup %#v", input)
-
-	if input.Location == "" {
-		rw.WriteHeader(http.StatusBadRequest)
-		return nil
-	}
-
-	if err := prepareBackupTarget(input.BackupTarget); err != nil {
-		return err
-	}
-
-	exists, err := backupExists(input)
-	if err != nil {
-		return fmt.Errorf("Error while determining if backup exists: %v", err)
-	}
-
-	if !exists {
-		logrus.Infof("Backup [%v] doesn't exist. Nothing to remove.", input.Location)
-		rw.WriteHeader(http.StatusNoContent)
-		return nil
-	}
-
-	cmd := exec.Command("longhorn", "backup", "rm", input.Location)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	logrus.Infof("Running %v", cmd.Args)
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	rw.WriteHeader(http.StatusNoContent)
-	return nil
 }
 
 func (s *Server) RestoreFromBackup(rw http.ResponseWriter, req *http.Request) error {
@@ -238,24 +194,6 @@ func getStatus(statusMap map[string]*status, statusMutex *sync.RWMutex, rw http.
 	}
 
 	return apiContext.WriteResource(status)
-}
-
-func backupExists(input locationInput) (bool, error) {
-	cmd := exec.Command("longhorn", "backup", "inspect", input.Location)
-	stderr := new(bytes.Buffer)
-	cmd.Stderr = stderr
-	cmd.Stdout = os.Stdout
-	logrus.Infof("Running %v", cmd.Args)
-	if err := cmd.Run(); err != nil {
-		errOutput := stderr.String()
-		if doesntExistRegex.MatchString(errOutput) {
-			return false, nil
-		}
-		logrus.Errorf("Backup inspect error output: %v", errOutput)
-		return false, err
-	}
-
-	return true, nil
 }
 
 func prepareBackupTarget(target rest.BackupTarget) error {
