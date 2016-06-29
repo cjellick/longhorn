@@ -96,9 +96,6 @@ func newSchema() *client.Schemas {
 			Input:  "backupInput",
 			Output: "backupStatus",
 		},
-		"removeBackup": client.Action{
-			Input: "locationInput",
-		},
 	}
 
 	restoreStatus := schemas.AddType("restorestatus", status{})
