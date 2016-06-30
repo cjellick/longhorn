@@ -24,7 +24,7 @@ func (s *Server) ListVolumes(rw http.ResponseWriter, req *http.Request) error {
 }
 
 func (s *Server) GetVolume(rw http.ResponseWriter, req *http.Request) error {
-	logrus.Infof("Getting volumes")
+	logrus.Infof("Getting volume")
 
 	apiContext := api.GetApiContext(req)
 	id := mux.Vars(req)["id"]
@@ -75,7 +75,11 @@ func (s *Server) RevertToSnapshot(rw http.ResponseWriter, req *http.Request) err
 
 func (s *Server) getVolume(context *api.ApiContext) *volume {
 	return &volume{
-		Resource: client.Resource{Id: "1"},
-		Name:     "volume",
+		Resource: client.Resource{
+			Id:      "1",
+			Type:    "volume",
+			Actions: map[string]string{},
+		},
+		Name: "volume",
 	}
 }
