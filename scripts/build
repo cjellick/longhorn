@@ -5,3 +5,5 @@ cd $(dirname $0)
 
 ./build-cli
 ./build-agent
+./build-docker-longhorn-driver
+./build-longhorn-orchestration

@@ -3,11 +3,14 @@ FROM ubuntu:16.04
 # Setup environment
 ENV PATH /go/bin:$PATH
 ENV DAPPER_DOCKER_SOCKET true
-ENV DAPPER_ENV TAG REPO
+ENV DAPPER_ENV TAG REPO DOCKER_LONGHORN_DRIVER_DEV_DIR LONGHORN_ORCHESTRATION_DEV_DIR
 ENV DAPPER_OUTPUT bin
 ENV DAPPER_RUN_ARGS --privileged --tmpfs /go/src/github.com/rancher/longhorn/integration/.venv:exec --tmpfs /go/src/github.com/rancher/longhorn/integration/.tox:exec -v /dev:/host/dev --pid host
 ENV DAPPER_SOURCE /go/src/github.com/rancher/longhorn
 ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
+ENV DOCKER_LONGHORN_DRIVER_URL https://github.com/cjellick/docker-longhorn-driver.git
+ENV DOCKER_LONGHORN_DRIVER_COMMIT 709c607b6ca87670270721303b03bf34c6b80756
+
 WORKDIR ${DAPPER_SOURCE}
 
 # Install packages
@@ -54,15 +57,6 @@ RUN cd /usr/src/tcmu-runner && \
     make install && \
     cp scsi_defs.h /usr/local/include && \
     cp libtcmu_static.a /usr/local/lib/libtcmu.a
-
-# Install longhorn Docker driver
-RUN GOPATH=/tmp/docker-longhorn-driver && \
-    mkdir -p $GOPATH/src/github.com/rancher && \
-    cd $GOPATH/src/github.com/rancher && \
-    git clone https://github.com/cjellick/docker-longhorn-driver.git && \
-    cd docker-longhorn-driver && \
-    git checkout de1a1f87278e90cb65691b6d8f7b141d9ef268c5 && \
-    go build -o /usr/local/bin/docker-longhorn-driver
 
 # Install libqcow
 RUN curl -sfL https://github.com/libyal/libqcow/releases/download/20160123/libqcow-alpha-20160123.tar.gz | tar xvzf - -C /usr/src

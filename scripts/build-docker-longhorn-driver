@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+GOPATH=/tmp/docker-longhorn-driver
+mkdir -p $GOPATH/src/github.com/rancher
+cd $GOPATH/src/github.com/rancher
+
+if [ -n "${DOCKER_LONGHORN_DRIVER_DEV_DIR}" ]; then
+    cp -r ${DOCKER_LONGHORN_DRIVER_DEV_DIR} docker-longhorn-driver
+    cd docker-longhorn-driver
+else
+    git clone ${DOCKER_LONGHORN_DRIVER_URL}
+    cd docker-longhorn-driver
+    git checkout -q ${DOCKER_LONGHORN_DRIVER_COMMIT}
+fi
+
+go build -o /usr/local/bin/docker-longhorn-driver
